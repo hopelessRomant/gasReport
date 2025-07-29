@@ -53,7 +53,7 @@ Save (`Ctrl+O`, `Enter`) and exit (`Ctrl+X`).
 ### 5️⃣ Run the Script
 
 ```bash
-python3 gas_calculator.py
+python3 smoke.py
 ```
 
 Enter the **gas used** when prompted, and the script will display:
