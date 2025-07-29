@@ -1,4 +1,4 @@
-# 🚀 GasReport – Ethereum Gas Fee Calculator  
+# GasReport – Ethereum Gas Fee Calculator  
 
 A Python tool to fetch **real-time Ethereum gas prices**, calculate transaction costs in **ETH and INR**, and display Safe, Average, and Fast fee estimates.
 
