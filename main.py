@@ -5,21 +5,15 @@ from calc_utils import calculate_gas_cost
 
 logging.basicConfig(level=logging.INFO)
 
-def get_gas_costs_json(gas_used, currency="inr"):
-    """
-    Fetch gas prices and ETH prices, then return a JSON-friendly dict
-    with costs in ETH, USD, and selected currency.
-    """
+def get_gas_costs_json(gas_used, currency="usd"):
+    """Fetch gas prices and ETH prices, then return JSON-like dict."""
     gas_prices = get_gas_prices()
-    eth_prices = get_eth_prices()
+    eth_prices = get_eth_prices(currency)
 
-    if not eth_prices:
-        return {"error": "Failed to fetch ETH prices."}
+    if not eth_prices or currency not in eth_prices:
+        return {"error": f"Failed to fetch ETH price for '{currency.upper()}'"}
 
-    if currency not in eth_prices:
-        currency = "inr"
-
-    eth_price_usd = eth_prices.get("usd", 0)
+    eth_price_usd = get_eth_prices("usd").get("usd", 0)  # Always fetch USD for comparison
     eth_price_target = eth_prices.get(currency, 0)
 
     results = {
@@ -61,7 +55,7 @@ def main():
         logging.error("Invalid gas input. Please enter a positive number.")
         return
 
-    currency = input("Enter target currency (default INR): ").strip().lower() or "inr"
+    currency = input("Enter target currency (default USD): ").strip().lower() or "usd"
     results = get_gas_costs_json(gas_used, currency)
 
     if "error" in results:
