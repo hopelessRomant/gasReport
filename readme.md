@@ -1,113 +1,119 @@
 
 ---
 
-# Gas Fee Calculator
+# Gas Price Calculator (Desktop App)
 
-A lightweight Python script that fetches **real-time Ethereum gas prices** from the Etherscan API and calculates **transaction fees in ETH, USD, and other currencies** using CoinGecko.
-The script is simple to set up and run, making it useful for developers testing and estimating smart contract gas costs.
-
----
-
-## 📌 Features
-
-* Fetches **Safe, Average, and Fast gas prices** from Etherscan.
-* Calculates **transaction costs** in ETH, USD, and multiple fiat currencies.
-* Uses **CoinGecko API (no API key required)** for currency conversion.
-* Outputs a **clean, formatted table** for better readability.
-* Works on **Linux/WSL2 environments** (recommended for smart contract developers).
+A local desktop application built with **PyQt6** that fetches Ethereum gas prices from Etherscan and ETH conversion rates from CoinGecko. The app calculates total gas costs (in ETH and the user’s preferred fiat currency) and updates automatically every 30 seconds.
 
 ---
 
-## 📌 Prerequisites
+## 🚀 Features
 
-* **Python 3.12.3** or higher (Linux/WSL recommended)
-* A valid **Etherscan API key**
+1. Enter **gas used** (e.g. 21000) and an **ISO currency code** (e.g. USD, INR, EUR).
+2. Click **Calculate** to display gas costs in ETH and fiat currency.
+3. App refreshes automatically every **30 seconds**, showing a countdown before each update.
+4. Text for “Safe” gas speed is displayed in **green**, “Average” in **blue**, and “Fast” in **red**.
+5. Clean, dark-themed interface with resizable layout.
 
 ---
 
-## 📌 Setup Instructions
+## 📁 Repository Structure
 
-### 1️⃣ Clone the Repository
+```
+gas_price_app/
+├── api_utils.py       # API fetch and caching logic
+├── calc_utils.py      # (Optional) separate calculation logic
+├── main.py            # Data retrieval and formatting logic
+├── app.py             # GUI application
+├── requirements.txt   # Python dependencies
+└── .env.example       # Example template for environment variables
+```
+
+---
+
+## 🧰 Setup & Run Instructions
+
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/tincan1596/GasReport
 cd GasReport
 ```
 
-### 2️⃣ Create a Virtual Environment
+### 2. Install Python dependencies
 
-```bash
-python3 -m venv .venv
-```
-
-### 3️⃣ Activate the Virtual Environment
-
-```bash
-source .venv/bin/activate
-```
-
-### 4️⃣ Install Dependencies
+Make sure you’re using **Python 3.7+** and run:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 5️⃣ Create a `.env` File
+### 3. Create API key file
 
-Inside the project root, create a file named `.env` and add:
-
-```
-ETHERSCAN_API_KEY=your_etherscan_api_key_here
-```
-
-Replace `your_etherscan_api_key_here` with your actual Etherscan API key.
-
----
-
-## 📌 How to Run
-
-Activate the virtual environment and run:
+Copy the example file and set your Etherscan API key:
 
 ```bash
-source .venv/bin/activate
-python3 smoke.py
+cp .env.example .env
 ```
 
-You will be prompted to:
+Open `.env` and replace placeholder:
 
-1. Enter the **gas used** for your transaction (e.g. `120000`)
-2. Enter the **target currency** (e.g. `INR`, `USD`, `EUR`, `GBP`, `JPY`). Press Enter to default to INR.
+```
+ETHERSCAN_API_KEY=your_real_key_here
+```
+
+### 4. Run the application
+
+```bash
+python3 app.py
+```
+
+* A GUI window will launch.
+* Enter **gas used** and **ISO currency code**, then click **Calculate**.
+* The table populates below and refreshes every **30 seconds**.
 
 ---
 
-## 📌 Example Output
+## ⚙️ Application Flow
 
-```
-Enter gas used: 1191956
-Enter target currency (default INR): INR
-
-🔹 Current Gas Prices (Gwei):
-   Safe   : 1.31 Gwei
-   Average: 1.31 Gwei
-   Fast   : 1.46 Gwei
-
--------------------------------------
-
-+---------+------------+------------+------------+
-|  Speed  | Cost (ETH) | Cost (USD) | Cost (INR) |
-+---------+------------+------------+------------+
-|  Safe   | 0.001563   | $5.10      | INR 425.65 |
-| Average | 0.001563   | $5.10      | INR 425.70 |
-|  Fast   | 0.001741   | $5.68      | INR 473.60 |
-+---------+------------+------------+------------+
-```
+* **`app.py`** handles the graphical interface, inputs, button, table, countdown logic, and periodic refresh.
+* **`main.py`** contains `get_gas_costs_json()` to fetch gas and ETH data.
+* **`api_utils.py`** manages API interactions and rate-limited caching for CoinGecko calls.
+* **`calc_utils.py`** (optional) can house modular functions for calculations if needed.
 
 ---
 
-## 📌 Notes
+## 💡 Notes
 
-* Supported currencies can be extended by modifying the CoinGecko API URL in the script.
-* Ensure that you have a stable internet connection and a valid Etherscan API key in your `.env` file.
+* No external settings are saved—each run starts fresh.
+* If you enter an uncommon or unsupported currency code, the app will default to USD or display an error.
+* Ensure your Etherscan API key is valid to avoid API errors.
+* This is a local desktop application and not a web app—no browser or server needed.
 
 ---
 
+## 🧭 Troubleshooting
+
+* **API error messages** usually point to:
+
+  * Invalid or expired API key.
+  * Exceeding free rate limits for CoinGecko (relevant if refresh is too frequent).
+* **GUI is blank or not resizing**:
+
+  * Ensure `app.py` has not been modified and includes correct layout settings.
+  * Restart the app after resizing the terminal window.
+* **Currency not recognized**:
+
+  * Check standard ISO codes (e.g. USD, EUR, INR). They must be lowercase in input.
+
+---
+
+## 🎯 Future Enhancements
+
+* Packaging as a standalone executable (`.exe` for Windows, `.app` for macOS).
+* Localization support for multiple currencies beyond USD.
+* Export results to CSV or JSON for further analysis.
+
+---
+
+Thank you for checking out the Gas Price Calculator. Feel free to open issues, fork the repo, and contribute improvements!
