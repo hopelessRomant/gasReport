@@ -30,8 +30,8 @@ The script is simple to set up and run, making it useful for developers testing 
 ### 1️⃣ Clone the Repository
 
 ```bash
-git clone <your-repo-url>
-cd <repo-folder>
+git clone https://github.com/tincan1596/GasReport
+cd GasReport
 ```
 
 ### 2️⃣ Create a Virtual Environment
