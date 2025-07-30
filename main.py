@@ -13,8 +13,8 @@ def get_gas_costs_json(gas_used, currency="usd"):
     if not eth_prices or currency not in eth_prices:
         return {"error": f"Failed to fetch ETH price for '{currency.upper()}'"}
 
-    eth_price_usd = get_eth_prices("usd").get("usd", 0)  # Always fetch USD for comparison
-    eth_price_target = eth_prices.get(currency, 0)
+    usd_price = get_eth_prices("usd").get("usd", 0)
+    target_price = eth_prices.get(currency, 0)
 
     results = {
         "currency": currency.upper(),
@@ -23,25 +23,32 @@ def get_gas_costs_json(gas_used, currency="usd"):
     }
 
     for speed, gwei in gas_prices.items():
-        if gwei == 0 or eth_price_usd == 0 or eth_price_target == 0:
-            results["gas_costs"].append({
+        if gwei == 0 or target_price == 0:
+            entry = {
                 "speed": speed,
                 "eth_cost": None,
-                "usd_cost": None,
                 "currency_cost": None,
                 "error": "API Error"
-            })
+            }
+            if currency == "usd":
+                entry["usd_cost"] = None
+            results["gas_costs"].append(entry)
             continue
 
-        gas_eth, gas_usd = calculate_gas_cost(gas_used, gwei, eth_price_usd)
-        _, gas_cur = calculate_gas_cost(gas_used, gwei, eth_price_target)
+        gas_eth = gas_used * gwei * 1e-9
+        gas_cur = gas_eth * target_price
+        gas_usd = gas_eth * usd_price if currency == "usd" else None
 
-        results["gas_costs"].append({
+        entry = {
             "speed": speed,
             "eth_cost": round(gas_eth, 8),
-            "usd_cost": round(gas_usd, 2),
             "currency_cost": round(gas_cur, 2),
-        })
+        }
+
+        if currency == "usd":
+            entry["usd_cost"] = round(gas_usd, 2)
+
+        results["gas_costs"].append(entry)
 
     return results
 
@@ -62,24 +69,40 @@ def main():
         logging.error(results["error"])
         return
 
+    # Build table dynamically
     table = []
     for entry in results["gas_costs"]:
         if entry.get("error"):
-            table.append([entry["speed"].capitalize(), "API Error", "-", "-"])
+            if currency == "usd":
+                table.append([entry["speed"].capitalize(), "API Error", "-"])
+            else:
+                table.append([entry["speed"].capitalize(), "API Error", "-"])
         else:
-            table.append([
-                entry["speed"].capitalize(),
-                f"{entry['eth_cost']:.6f} ETH",
-                f"${entry['usd_cost']:,.2f} USD",
-                f"{results['currency']} {entry['currency_cost']:,.2f}",
-            ])
+            if currency == "usd":
+                table.append([
+                    entry["speed"].capitalize(),
+                    f"{entry['eth_cost']:.6f} ETH",
+                    f"${entry['usd_cost']:,.2f} USD"
+                ])
+            else:
+                table.append([
+                    entry["speed"].capitalize(),
+                    f"{entry['eth_cost']:.6f} ETH",
+                    f"{results['currency']} {entry['currency_cost']:,.2f}",
+                ])
 
+    # Print gas prices
     print("\n🔹 Current Gas Prices (Gwei):")
     for k, v in results["current_gas_prices_gwei"].items():
         print(f"   {k.capitalize():<7}: {v} Gwei")
 
     print("\n-------------------------------------\n")
-    print(tabulate(table, headers=["Speed", "Cost (ETH)", "Cost (USD)", f"Cost ({results['currency']})"], tablefmt="pretty"))
+
+    # Print table with correct headers
+    if currency == "usd":
+        print(tabulate(table, headers=["Speed", "Cost (ETH)", "Cost (USD)"], tablefmt="pretty"))
+    else:
+        print(tabulate(table, headers=["Speed", "Cost (ETH)", f"Cost ({results['currency']})"], tablefmt="pretty"))
 
 
 if __name__ == "__main__":

@@ -35,9 +35,9 @@ def get_gas_prices():
     }
 
 def get_eth_prices(currency="usd"):
+    """Fetch ETH price in the requested currency from CoinGecko API."""
     url = f"https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies={currency}"
     result = safe_api_request(url, "get_eth_prices")
-    
     if not result or "ethereum" not in result:
         return {}
     return result["ethereum"]
