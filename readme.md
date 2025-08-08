@@ -10,7 +10,7 @@ gasReport is your chill PyQt6 app running in WSL2/Linux that does one thing well
 ## What You Need Before You Start
 
 * WSL2 (or any Linux, but WSL2 is tested & loved)
-* Python (latest version works fine)
+* Python 3.8+ (latest version works fine)
 * An Etherscan API key (store it safely, not that I care :-)..)
 
 ---
@@ -35,12 +35,12 @@ gasReport is your chill PyQt6 app running in WSL2/Linux that does one thing well
    ```bash
    chmod +x install.sh
    ```
-5. Run the installer — it sets up everything for you and run the app:
+5. Run the installer — it sets up everything for you:
 
    ```bash
    ./install.sh
    ```
-6. In the future, just open your bash terminal and type:
+6. Restart the terminal or run `source ~/.bashrc` , then in future just open your bash terminal and type:
 
    ```bash
    gasReport

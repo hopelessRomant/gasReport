@@ -64,7 +64,7 @@ class GasPriceApp(QWidget):
         self.gas_input.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
 
         self.currency_input = QLineEdit(self)
-        self.currency_input.setPlaceholderText("Enter ISO code (e.g. USD)")
+        self.currency_input.setPlaceholderText("Enter ISO code")
         self.currency_input.setStyleSheet(self._input_style())
         self.currency_input.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
 
