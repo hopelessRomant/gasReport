@@ -42,13 +42,13 @@ cd GasReport
 
 ### 2. Install Python dependencies
 
-Make sure you’re using **Python 3.7+** and run:
+Make sure you’re using **Python 3.7+** in your virtual environment (.venv) and run:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. Create API key file
+### 3. Create an API key file
 
 Copy the example file and set your Etherscan API key:
 
@@ -56,7 +56,7 @@ Copy the example file and set your Etherscan API key:
 cp .env.example .env
 ```
 
-Open `.env` and replace placeholder:
+Open `.env` and replace the placeholder:
 
 ```
 ETHERSCAN_API_KEY=your_real_key_here
@@ -76,7 +76,7 @@ python3 app.py
 
 ## ⚙️ Application Flow
 
-* **`app.py`** handles the graphical interface, inputs, button, table, countdown logic, and periodic refresh.
+* **`app.py`** handles the graphical interface, inputs, buttons, table, countdown logic, and periodic refresh.
 * **`main.py`** contains `get_gas_costs_json()` to fetch gas and ETH data.
 * **`api_utils.py`** manages API interactions and rate-limited caching for CoinGecko calls.
 * **`calc_utils.py`** (optional) can house modular functions for calculations if needed.
