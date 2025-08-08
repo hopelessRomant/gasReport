@@ -1,48 +1,44 @@
-#!/usr/bin/env bash
+#!/bin/bash
 set -e
 
-APP_NAME="GasReport"
-ICON_FILE="gasReport.jpg" # must be in same folder as install.sh
-SCRIPT_TO_RUN="./run.sh"  # entry point of your app
+APP_NAME="gasReport"
+INSTALL_DIR="$HOME/.local/bin"
+APP_PATH="$(pwd)/app.py"
+WRAPPER_PATH="$INSTALL_DIR/$APP_NAME"
 
-# --- Detect Windows username ---
-WIN_USER=$(cmd.exe /C "echo %USERNAME%" 2>/dev/null | tr -d '\r')
+# 1. Ensure ~/.local/bin exists
+mkdir -p "$INSTALL_DIR"
 
-# --- Paths ---
-LINUX_DESKTOP_DIR="$HOME/.local/share/applications"
-WIN_ICON_DIR="/mnt/c/Users/$WIN_USER/Pictures/$APP_NAME"
-WIN_ICON_PATH="$WIN_ICON_DIR/$ICON_FILE"
-DESKTOP_FILE="$LINUX_DESKTOP_DIR/$APP_NAME.desktop"
+# 2. Prepare new wrapper content
+read -r -d '' NEW_WRAPPER <<EOF || true
+#!/bin/bash
+cd "$(pwd)"
+source .venv/bin/activate
+python3 "$APP_PATH"
+EOF
 
-# --- Create directories ---
-mkdir -p "$LINUX_DESKTOP_DIR"
-mkdir -p "$WIN_ICON_DIR"
-
-# --- Copy icon to Windows-accessible path ---
-if [[ ! -f "$ICON_FILE" ]]; then
-    echo "[ERROR] Icon file '$ICON_FILE' not found in $(pwd)"
-    exit 1
+# 3. Write wrapper only if content differs or file missing
+if [ ! -f "$WRAPPER_PATH" ] || ! cmp -s <(echo "$NEW_WRAPPER") "$WRAPPER_PATH"; then
+    echo "$NEW_WRAPPER" > "$WRAPPER_PATH"
+    chmod +x "$WRAPPER_PATH"
+    echo "Updated wrapper script at $WRAPPER_PATH"
 fi
-cp "$ICON_FILE" "$WIN_ICON_PATH"
 
-# --- Create desktop shortcut (used by WSLg & Windows Start Menu) ---
-cat > "$DESKTOP_FILE" <<EOL
-[Desktop Entry]
-Name=$APP_NAME
-Exec=/bin/bash -c "cd $(pwd) && $SCRIPT_TO_RUN"
-Icon=$WIN_ICON_PATH
-Type=Application
-Categories=Utility;
-Terminal=false
-EOL
+# 4. Make sure ~/.local/bin is in PATH
+if ! echo "$PATH" | grep -q "$HOME/.local/bin"; then
+    echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.bashrc"
+    export PATH="$HOME/.local/bin:$PATH"
+fi
 
-# --- Make shortcut executable ---
-chmod +x "$DESKTOP_FILE"
+# 5. Set up .venv & install deps if missing
+if [ ! -d ".venv" ]; then
+    python3 -m venv .venv
+    source .venv/bin/activate
+    pip install --upgrade pip
+    pip install -r requirements.txt
+else
+    source .venv/bin/activate
+fi
 
-# --- Refresh Windows Start Menu ---
-powershell.exe -Command "Stop-Process -Name explorer -Force; Start-Process explorer" >/dev/null 2>&1 || true
-
-echo "[SUCCESS] '$APP_NAME' installed."
-echo " - Shortcut: $DESKTOP_FILE"
-echo " - Icon: $WIN_ICON_PATH"
-echo "You can now find '$APP_NAME' in the Windows Start Menu and Linux app list."
+# 6. Launch the app
+python3 "$APP_PATH"
