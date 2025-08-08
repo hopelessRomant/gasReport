@@ -31,7 +31,7 @@ class FetchThread(QThread):
 class GasPriceApp(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Gas Price Calculator")
+        self.setWindowTitle("Gas Report")
         self.setStyleSheet("background-color: #121212; color: white; font-family: Roboto;")
         self.resize(700, 400)
 
