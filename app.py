@@ -6,10 +6,11 @@ from PyQt6.QtWidgets import (
     QTableWidgetItem, QSizePolicy, QSpacerItem
 )
 from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtGui import QCursor, QBrush, QColor
+from PyQt6.QtGui import QCursor, QBrush, QColor, QDoubleValidator
 from main import get_gas_costs_json
 
 logging.basicConfig(level=logging.INFO)
+
 
 class GasPriceApp(QWidget):
     def __init__(self):
@@ -18,8 +19,6 @@ class GasPriceApp(QWidget):
         # ---- Window Settings ----
         self.setWindowTitle("Gas Price Calculator")
         self.setStyleSheet("background-color: #121212; color: white; font-family: Roboto;")
-
-        # Set a default size matching table + inputs
         self.resize(700, 400)
 
         # ---- Internal Variables ----
@@ -45,6 +44,7 @@ class GasPriceApp(QWidget):
         self.gas_input = QLineEdit(self)
         self.gas_input.setPlaceholderText("Enter Gas Used (e.g. 21000)")
         self.gas_input.setStyleSheet(self._input_style())
+        self.gas_input.setValidator(QDoubleValidator(0.0, 1e9, 2))  # prevent invalid input
 
         self.currency_input = QLineEdit(self)
         self.currency_input.setPlaceholderText("Enter ISO code: example - USD for $")
@@ -110,12 +110,15 @@ class GasPriceApp(QWidget):
             return
 
         self.currency = self.currency_input.text().strip().lower() or "usd"
+
+        # Reset and start timer
+        self.timer.stop()
         self.counter = 30
         self.countdown_label.setVisible(True)
         self.countdown_label.setText("Next refresh in 30s")
+        self.timer.start(1000)
 
         self.refresh_table()
-        self.timer.start(1000)
 
     # ---------- Populate Table ----------
     def refresh_table(self):
@@ -123,6 +126,11 @@ class GasPriceApp(QWidget):
             return
 
         results = get_gas_costs_json(self.gas_used, self.currency)
+
+        # Validate API response
+        if not results or "gas_costs" not in results or "current_gas_prices_gwei" not in results:
+            logging.error("Unexpected API response format")
+            return
         if "error" in results:
             logging.error(results["error"])
             return
@@ -130,30 +138,50 @@ class GasPriceApp(QWidget):
         data = results["gas_costs"]
         self.table.setRowCount(len(data))
 
+        # Set headers once
+        if self.currency == "usd":
+            self.table.setHorizontalHeaderLabels(["Speed", "Cost (ETH)", "Cost (USD)"])
+        else:
+            self.table.setHorizontalHeaderLabels(
+                ["Speed", "Cost (ETH)", f"Cost ({self.currency.upper()})"]
+            )
+
         color_map = {
             "safe": "#00FF00",      # Green
-            "average": "#00BFFF",   # Blue
-            "fast": "#FF4500"       # Red
+            "average": "#33CFFF",   # Slightly lighter blue for readability
+            "fast": "#FF6347"       # Softer red
         }
 
         for row, entry in enumerate(data):
-            speed = entry["speed"]
-            speed_text = f"{speed.capitalize()} ({results['current_gas_prices_gwei'][speed]} Gwei)"
-            self.table.setItem(row, 0, QTableWidgetItem(speed_text))
-            self.table.setItem(row, 1, QTableWidgetItem(f"{entry['eth_cost']:.6f} ETH"))
+            speed = entry.get("speed", "unknown")
+            gwei_price = results["current_gas_prices_gwei"].get(speed, "?")
+            speed_text = f"{speed.capitalize()} ({gwei_price} Gwei)"
+
+            # Create table items
+            eth_item = QTableWidgetItem(f"{entry.get('eth_cost', 0):.6f} ETH")
+            eth_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
 
             if self.currency == "usd":
-                self.table.setHorizontalHeaderLabels(["Speed", "Cost (ETH)", "Cost (USD)"])
-                self.table.setItem(row, 2, QTableWidgetItem(f"${entry['usd_cost']:.2f}"))
+                currency_item = QTableWidgetItem(f"${entry.get('usd_cost', 0):.2f}")
             else:
-                self.table.setHorizontalHeaderLabels(
-                    ["Speed", "Cost (ETH)", f"Cost ({self.currency.upper()})"]
+                currency_item = QTableWidgetItem(
+                    f"{self.currency.upper()} {entry.get('currency_cost', 0):.2f}"
                 )
-                self.table.setItem(row, 2, QTableWidgetItem(f"{self.currency.upper()} {entry['currency_cost']:.2f}"))
+            currency_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
 
+            speed_item = QTableWidgetItem(speed_text)
+            speed_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+
+            # Set colors
             brush = QBrush(QColor(color_map.get(speed, "#FFFFFF")))
-            for col in range(3):
-                self.table.item(row, col).setForeground(brush)
+            speed_item.setForeground(brush)
+            eth_item.setForeground(brush)
+            currency_item.setForeground(brush)
+
+            # Add to table
+            self.table.setItem(row, 0, speed_item)
+            self.table.setItem(row, 1, eth_item)
+            self.table.setItem(row, 2, currency_item)
 
     # ---------- Countdown ----------
     def update_timer(self):
