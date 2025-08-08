@@ -1,119 +1,103 @@
 
 ---
 
-# Gas Price Calculator (Desktop App)
+# gasReport 🚀
 
-A local desktop application built with **PyQt6** that fetches Ethereum gas prices from Etherscan and ETH conversion rates from CoinGecko. The app calculates total gas costs (in ETH and the user’s preferred fiat currency) and updates automatically every 30 seconds.
-
----
-
-## 🚀 Features
-
-1. Enter **gas used** (e.g. 21000) and an **ISO currency code** (e.g. USD, INR, EUR).
-2. Click **Calculate** to display gas costs in ETH and fiat currency.
-3. App refreshes automatically every **30 seconds**, showing a countdown before each update.
-4. Text for “Safe” gas speed is displayed in **green**, “Average” in **blue**, and “Fast” in **red**.
-5. Clean, dark-themed interface with resizable layout.
+gasReport is your chill PyQt6 app running in WSL2/Linux that does one thing well: take your input gas amount + currency ISO code, talk to Etherscan, and show you the gas prices in ETH and your fave currency — safe, average, and fast speeds included. It’s simple, clean, and gets the job done without drama.
 
 ---
 
-## 📁 Repository Structure
+## What You Need Before You Start
+
+* WSL2 (or any Linux, but WSL2 is tested & loved)
+* Python (latest version works fine)
+* An Etherscan API key (store it safely, not that I care :-)..)
+
+---
+
+## Quick Setup Guide
+
+1. **Make sure WSL2 + Python are installed** — If you’re here, you probably know this. If not, Google it or ask ChatGPT.
+2. Clone this repo:
+
+   ```bash
+   git clone https://github.com/tincan1596/gasReport
+   cd gasReport
+   ```
+3. Copy `.env.example` to `.env` and put your `ETHERSCAN_API_KEY` inside:
+
+   ```bash
+   cp .env.example .env
+   # Edit .env and add your key
+   ```
+4. Make the installer script executable:
+
+   ```bash
+   chmod +x install.sh
+   ```
+5. Run the installer — it sets up everything for you and run the app:
+
+   ```bash
+   ./install.sh
+   ```
+6. In the future, just open your bash terminal and type:
+
+   ```bash
+   gasReport
+   ```
+
+   Boom! The app (MAY) launch, ask chat GPT if an error pops up :-)...
+
+---
+
+## How It Works
+
+* You feed it the total gas amount (from wherever you want — foundry test, another tool, you do you).
+* Enter your preferred currency’s ISO code (like USD, INR, EUR, whatever).
+* gasReport hits Etherscan API, grabs the latest gas prices in ETH.
+* Converts that ETH gas price to your currency.
+* Shows you Safe, Average, and Fast gas price options.
+
+No rocket science, just quick conversions.
+
+---
+
+## Troubleshooting / Help
+
+If something breaks or looks funky — try turning it off and on again. Still stuck? Hit up ChatGPT or your favorite AI assistant for a quick fix. Seriously, that’s the best support you’re gonna get.
+
+---
+
+## Heads Up
+
+* Keep your `ETHERSCAN_API_KEY` private. Don’t leak it or share it like free candy.
+* This app is still in chill mode — no wild error handling or fancy alerts. If it crashes, blame the internet or your input.
+* Future plans? Maybe a Windows executable so you don’t have to bother with WSL2 — stay tuned.
+
+---
+
+## License
+
+MIT License — do whatever you want, just don’t sue me.
+
+---
+
+## Directory Breakdown (If You Care)
 
 ```
-gas_price_app/
-├── api_utils.py       # API fetch and caching logic
-├── calc_utils.py      # (Optional) separate calculation logic
-├── main.py            # Data retrieval and formatting logic
-├── app.py             # GUI application
-├── requirements.txt   # Python dependencies
-└── .env.example       # Example template for environment variables
+├── LICENSE  
+├── __pycache__ (ignored, because duh)  
+├── api_utils.py  # fetches data from Etherscan  
+├── app.py        # PyQt6 app GUI  
+├── calc_utils.py # gas price and currency conversion logic  
+├── install.sh    # sets up your environment & dependencies  
+├── main.py       # processes JSON data for the app  
+├── readme.md     # this file, obviously  
+├── requirements.txt # Python dependencies  
 ```
 
 ---
 
-## 🧰 Setup & Run Instructions
-
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/tincan1596/GasReport
-cd GasReport
-```
-
-### 2. Install Python dependencies
-
-Make sure you’re using **Python 3.7+** in your virtual environment (.venv) and run:
-
-```bash
-pip install -r requirements.txt
-```
-
-### 3. Create an API key file
-
-Copy the example file and set your Etherscan API key:
-
-```bash
-cp .env.example .env
-```
-
-Open `.env` and replace the placeholder:
-
-```
-ETHERSCAN_API_KEY=your_real_key_here
-```
-
-### 4. Run the application
-
-```bash
-python3 app.py
-```
-
-* A GUI window will launch.
-* Enter **gas used** and **ISO currency code**, then click **Calculate**.
-* The table populates below and refreshes every **30 seconds**.
+That’s it. Fast, easy, and actually useful.
 
 ---
-
-## ⚙️ Application Flow
-
-* **`app.py`** handles the graphical interface, inputs, buttons, table, countdown logic, and periodic refresh.
-* **`main.py`** contains `get_gas_costs_json()` to fetch gas and ETH data.
-* **`api_utils.py`** manages API interactions and rate-limited caching for CoinGecko calls.
-* **`calc_utils.py`** (optional) can house modular functions for calculations if needed.
-
----
-
-## 💡 Notes
-
-* No external settings are saved—each run starts fresh.
-* If you enter an uncommon or unsupported currency code, the app will default to USD or display an error.
-* Ensure your Etherscan API key is valid to avoid API errors.
-* This is a local desktop application and not a web app—no browser or server needed.
-
----
-
-## 🧭 Troubleshooting
-
-* **API error messages** usually point to:
-
-  * Invalid or expired API key.
-  * Exceeding free rate limits for CoinGecko (relevant if refresh is too frequent).
-* **GUI is blank or not resizing**:
-
-  * Ensure `app.py` has not been modified and includes correct layout settings.
-  * Restart the app after resizing the terminal window.
-* **Currency not recognized**:
-
-  * Check standard ISO codes (e.g. USD, EUR, INR). They must be lowercase in input.
-
----
-
-## 🎯 Future Enhancements
-
-* Packaging as a standalone executable (`.exe` for Windows, `.app` for macOS).
-* Localization support for multiple currencies beyond USD.
-* Export results to CSV or JSON for further analysis.
-
----
-
-Thank you for checking out the Gas Price Calculator. Feel free to open issues, fork the repo, and contribute improvements!
