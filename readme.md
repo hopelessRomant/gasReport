@@ -40,7 +40,7 @@ gasReport is your chill PyQt6 app running in WSL2/Linux that does one thing well
    ```bash
    ./install.sh
    ```
-6. Restart the terminal or run `source ~/.bashrc` , then in future just open your bash terminal and type:
+6. Restart the terminal or run `source ~/.bashrc` , now you can run the app from any directory at any time by just typing in:
 
    ```bash
    gasReport
