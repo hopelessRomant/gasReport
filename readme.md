@@ -30,17 +30,12 @@ gasReport is your chill PyQt6 app running in WSL2/Linux that does one thing well
    cp .env.example .env
    # Edit .env and add your key
    ```
-4. Make the installer script executable:
+4. Run the installer — it sets up everything for you:
 
    ```bash
-   chmod +x install.sh
+   bash install.sh
    ```
-5. Run the installer — it sets up everything for you:
-
-   ```bash
-   ./install.sh
-   ```
-6. Restart the terminal or run `source ~/.bashrc` , now you can run the app from any directory at any time by just typing in:
+5. Restart the terminal or run `source ~/.bashrc` , now you can run the app from any directory at any time by just typing in:
 
    ```bash
    gasReport
