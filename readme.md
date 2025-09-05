@@ -1,7 +1,7 @@
 
 ---
 
-# gasReport 🚀
+# gasReport 
 
 gasReport is your chill PyQt6 app running in WSL2/Linux that does one thing well: take your input gas amount + currency ISO code, talk to Etherscan, and show you the gas prices in ETH and your fav currency — safe, average, and fast speeds included. It’s simple, clean, and gets the job done without drama.
 
