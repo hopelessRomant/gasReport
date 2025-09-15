@@ -11,6 +11,7 @@ gasReport is your chill PyQt6 app running in WSL2/Linux that does one thing well
 
 * WSL2 (or any Linux, but WSL2 is tested & loved)
 * Python 3.8+ (latest version works fine)
+* Working SSH link with github
 * An Etherscan API key (store it safely, not that I care :-)..)
 
 ---
@@ -21,7 +22,7 @@ gasReport is your chill PyQt6 app running in WSL2/Linux that does one thing well
 2. Clone this repo:
 
    ```bash
-   git clone https://github.com/tincan1596/gasReport
+   git clone https://github.com/hopelessRomant/gasReport
    cd gasReport
    ```
 3. Copy `.env.example` to `.env` and put your `ETHERSCAN_API_KEY` inside:
