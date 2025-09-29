@@ -35,6 +35,7 @@ class GasPriceApp(QWidget):
         self.setStyleSheet("background-color: #121212; color: white; font-family: Roboto;")
         self.resize(700, 400)
 
+        # state
         self.gas_used = None
         self.currency = None
         self.counter = 30
@@ -42,17 +43,35 @@ class GasPriceApp(QWidget):
         self.failure_count = 0
         self.min_refresh_interval = 30
 
+        # UI setup
+        self._setup_ui()
+
+        # timer
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_timer)
+
+        # colors
+        self.color_map = {
+            "safe": "#00FF00",
+            "average": "#33CFFF",
+            "fast": "#FF6347"
+        }
+
+    # ---------------- UI setup ----------------
+    def _setup_ui(self):
         main_layout = QVBoxLayout()
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
         self.setLayout(main_layout)
 
+        # countdown label
         self.countdown_label = QLabel("", self)
         self.countdown_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.countdown_label.setStyleSheet("font-size: 16px; padding: 8px;")
         self.countdown_label.setVisible(False)
         main_layout.addWidget(self.countdown_label)
 
+        # input row
         input_layout = QHBoxLayout()
         input_layout.setContentsMargins(6, 6, 6, 6)
         input_layout.setSpacing(8)
@@ -72,7 +91,6 @@ class GasPriceApp(QWidget):
         self.calculate_button.setStyleSheet(self._button_style())
         self.calculate_button.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.calculate_button.clicked.connect(self.calculate)
-        self.calculate_button.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
 
         input_layout.addWidget(self.gas_input, 2)
         input_layout.addWidget(self.currency_input, 1)
@@ -80,6 +98,7 @@ class GasPriceApp(QWidget):
 
         main_layout.addLayout(input_layout)
 
+        # table
         self.table = QTableWidget(self)
         self.table.setColumnCount(3)
         self.table.setHorizontalHeaderLabels(["Speed", "Cost (ETH)", "Cost (Currency)"])
@@ -96,25 +115,16 @@ class GasPriceApp(QWidget):
                 border: none;
             }
         """)
-        self.table.verticalHeader().setVisible(False)
-        self.table.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-
+        vertical_header = self.table.verticalHeader()
+        if vertical_header is not None:
+            vertical_header.setVisible(False)
         header = self.table.horizontalHeader()
-        header.setStretchLastSection(True)
-        for i in range(3):
-            header.setSectionResizeMode(i, QHeaderView.ResizeMode.Stretch)
-        header.setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)
-
+        if header is not None:
+            header.setStretchLastSection(True)
+            for i in range(3):
+                header.setSectionResizeMode(i, QHeaderView.ResizeMode.Stretch)
+            header.setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)
         main_layout.addWidget(self.table, 1)
-
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(self.update_timer)
-
-        self.color_map = {
-            "safe": "#00FF00",
-            "average": "#33CFFF",
-            "fast": "#FF6347"
-        }
 
     def _input_style(self):
         return (
@@ -129,11 +139,13 @@ class GasPriceApp(QWidget):
             " QPushButton:hover { background-color: #018786; color: white; }"
         )
 
+    # ---------------- Input handling ----------------
     def calculate(self):
         raw = self.gas_input.text().strip()
         if not raw:
             logging.error("Gas input empty")
             return
+
         sanitized = raw.replace(",", "").replace(" ", "")
         try:
             self.gas_used = float(sanitized)
@@ -151,17 +163,13 @@ class GasPriceApp(QWidget):
         self.timer.start(1000)
         self.start_fetch()
 
+    # ---------------- Fetch handling ----------------
     def start_fetch(self):
-        if self.fetch_thread is not None:
-            try:
-                if self.fetch_thread.isRunning():
-                    logging.info("Fetch already in progress; skipping new fetch request.")
-                    return
-            except RuntimeError:
-                self.fetch_thread = None
+        if self.fetch_thread and self.fetch_thread.isRunning():
+            logging.info("Fetch already in progress; skipping new fetch request.")
+            return
 
         self.set_inputs_enabled(False)
-
         thread = FetchThread(self.gas_used, self.currency)
         thread.finished.connect(self.on_fetch_finished)
         thread.errored.connect(self.on_fetch_error)
@@ -180,18 +188,22 @@ class GasPriceApp(QWidget):
         logging.info("Fetch finished")
         self.set_inputs_enabled(True)
         self.failure_count = 0
-        if not results:
-            logging.error("Empty response from get_gas_costs_json")
+
+        if not isinstance(results, dict):
+            logging.error("Unexpected response type: %r", type(results))
             self.clear_table()
             return
-        if isinstance(results, dict) and "error" in results:
+
+        if "error" in results:
             logging.error("API returned error: %s", results.get("error"))
             self.clear_table()
             return
-        if not isinstance(results, dict) or "gas_costs" not in results or "current_gas_prices_gwei" not in results:
-            logging.error("Unexpected API response format: missing expected keys")
+
+        if "gas_costs" not in results or "current_gas_prices_gwei" not in results:
+            logging.error("API response missing required keys")
             self.clear_table()
             return
+
         self.populate_table(results)
 
     def on_fetch_error(self, message: str):
@@ -204,57 +216,53 @@ class GasPriceApp(QWidget):
             self.counter = max(self.counter, 60)
 
     def _cleanup_fetch_thread(self, *args):
-        thread = getattr(self, "fetch_thread", None)
-        if thread is not None:
+        if self.fetch_thread:
             try:
-                thread.deleteLater()
+                self.fetch_thread.deleteLater()
             except Exception:
                 pass
-        self.fetch_thread = None
+            self.fetch_thread = None
 
+    # ---------------- Table handling ----------------
     def clear_table(self):
         self.table.setRowCount(0)
         self.table.setHorizontalHeaderLabels(["Speed", "Cost (ETH)", "Cost (Currency)"])
 
     def populate_table(self, results):
         data = results.get("gas_costs", [])
+        if not isinstance(data, list):
+            logging.error("Invalid data format for gas_costs")
+            self.clear_table()
+            return
+
         prices = results.get("current_gas_prices_gwei", {})
+        if not isinstance(prices, dict):
+            prices = {}
+
         self.table.setRowCount(len(data))
 
-        if self.currency == "usd":
-            self.table.setHorizontalHeaderLabels(["Speed", "Cost (ETH)", "Cost (USD)"])
-        else:
-            self.table.setHorizontalHeaderLabels(
-                ["Speed", "Cost (ETH)", f"Cost ({self.currency.upper()})"]
-            )
+        header_currency = "USD" if self.currency == "usd" else (self.currency or "CUR").upper()
+        self.table.setHorizontalHeaderLabels(["Speed", "Cost (ETH)", f"Cost ({header_currency})"])
 
         for row, entry in enumerate(data):
             if not isinstance(entry, dict):
                 entry = {}
+
             speed_raw = str(entry.get("speed", "unknown"))
             speed_key = speed_raw.lower()
             gwei_price = prices.get(speed_raw, prices.get(speed_key, "?"))
             speed_display_label = f"{speed_raw.capitalize()} ({gwei_price} Gwei)"
-            try:
-                eth_cost_val = float(entry.get("eth_cost", 0))
-            except Exception:
-                eth_cost_val = 0.0
-            eth_text = f"{eth_cost_val:.6f} ETH"
-            eth_item = QTableWidgetItem(eth_text)
+
+            eth_cost_val = self._safe_float(entry.get("eth_cost", 0))
+            eth_item = QTableWidgetItem(f"{eth_cost_val:.6f} ETH")
             eth_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
 
             if self.currency == "usd":
-                try:
-                    usd_val = float(entry.get("usd_cost", 0))
-                except Exception:
-                    usd_val = 0.0
-                currency_text = f"${usd_val:.2f}"
+                val = self._safe_float(entry.get("usd_cost", 0))
+                currency_text = f"${val:.2f}"
             else:
-                try:
-                    other_val = float(entry.get("currency_cost", 0))
-                except Exception:
-                    other_val = 0.0
-                currency_text = f"{self.currency.upper()} {other_val:.2f}"
+                val = self._safe_float(entry.get("currency_cost", 0))
+                currency_text = f"{header_currency} {val:.2f}"
 
             currency_item = QTableWidgetItem(currency_text)
             currency_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -264,17 +272,28 @@ class GasPriceApp(QWidget):
 
             color_hex = self.color_map.get(speed_key, "#FFFFFF")
             brush = QBrush(QColor(color_hex))
-            speed_item.setForeground(brush)
-            eth_item.setForeground(brush)
-            currency_item.setForeground(brush)
+            for item in (speed_item, eth_item, currency_item):
+                item.setForeground(brush)
 
             self.table.setItem(row, 0, speed_item)
             self.table.setItem(row, 1, eth_item)
             self.table.setItem(row, 2, currency_item)
 
-        self.table.viewport().update()
-        self.table.horizontalHeader().update()
+        viewport = self.table.viewport()
+        if viewport is not None:
+            viewport.update()
+        header = self.table.horizontalHeader()
+        if header is not None:
+            header.update()
 
+    @staticmethod
+    def _safe_float(val):
+        try:
+            return float(val)
+        except Exception:
+            return 0.0
+
+    # ---------------- Timer + cleanup ----------------
     def update_timer(self):
         self.counter -= 1
         if self.counter <= 0:
@@ -283,31 +302,18 @@ class GasPriceApp(QWidget):
         self.countdown_label.setText(f"Next refresh in {self.counter}s")
 
     def closeEvent(self, event):
-        try:
-            thread = getattr(self, "fetch_thread", None)
-            if thread is not None:
-                try:
-                    thread.finished.disconnect(self.on_fetch_finished)
-                except Exception:
-                    pass
-                try:
-                    thread.errored.disconnect(self.on_fetch_error)
-                except Exception:
-                    pass
-                try:
-                    if thread.isRunning():
-                        thread.quit()
-                        thread.wait(2000)
-                except RuntimeError:
-                    pass
-                try:
-                    thread.deleteLater()
-                except Exception:
-                    pass
-        except Exception:
-            pass
-        finally:
-            super().closeEvent(event)
+        if self.fetch_thread:
+            try:
+                self.fetch_thread.quit()
+                self.fetch_thread.wait(2000)
+            except Exception:
+                pass
+            try:
+                self.fetch_thread.deleteLater()
+            except Exception:
+                pass
+            self.fetch_thread = None
+        super().closeEvent(event)
 
 
 if __name__ == "__main__":
