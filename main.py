@@ -12,13 +12,6 @@ def _safe_float(val, default=0.0):
 
 
 def get_gas_costs_json(gas_used, currency="usd"):
-    """
-    Return a dict with:
-        {"gas_costs": [...], "current_gas_prices_gwei": {...}}
-    Or return {"error": "..."} on fatal problems.
-    This function is defensive: it never returns a bare string.
-    """
-    # ensure gas_used is numeric
     try:
         gas_used_val = _safe_float(gas_used, default=0.0)
     except Exception:

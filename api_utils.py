@@ -1,4 +1,3 @@
-# api_utils.py
 import os
 import json
 import requests
@@ -40,8 +39,6 @@ def safe_api_request(url: str, key: str):
 def get_gas_prices(chain_id: Optional[str] = None):
     """
     Fetch gas prices using Etherscan API v2 (gasoracle). Returns normalized dict of floats:
-    {"safe": float, "average": float, "fast": float}
-    If anything goes wrong, returns zeros for each entry (safe fallback for the UI).
     """
     if not ETHERSCAN_API_KEY:
         logging.error("ETHERSCAN_API_KEY not found in .env")
@@ -63,15 +60,12 @@ def get_gas_prices(chain_id: Optional[str] = None):
         logging.error("[get_gas_prices] bad result: %r", result)
         return {"safe": 0.0, "average": 0.0, "fast": 0.0}
 
-    # If upstream returned wrapped raw text, bail and log it
     if "_raw_text" in result:
         logging.error("[get_gas_prices] upstream returned non-JSON: %s", result["_raw_text"][:300])
         return {"safe": 0.0, "average": 0.0, "fast": 0.0}
 
-    # expected shape: {"status":"1","message":"OK","result": { ... } }
     r = result.get("result")
     if isinstance(r, str):
-        # Etherscan sometimes returns a human-readable message in 'result'
         logging.error("[get_gas_prices] unexpected 'result' structure (string): %s", r[:300])
         return {"safe": 0.0, "average": 0.0, "fast": 0.0}
 
