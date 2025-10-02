@@ -1,8 +1,8 @@
 import sys
 import logging
 from PyQt6.QtWidgets import (
-    QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
-    QPushButton, QTableWidget, QTableWidgetItem, QSizePolicy, QFrame, QHeaderView
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
+    QPushButton, QTableWidget, QTableWidgetItem, QSizePolicy, QFrame, QHeaderView, QApplication
 )
 from PyQt6.QtCore import Qt, QTimer, QThread, pyqtSignal
 from PyQt6.QtGui import QCursor, QBrush, QColor, QDoubleValidator
